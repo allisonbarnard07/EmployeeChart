@@ -2,20 +2,14 @@ const Manager = require("./lib/Manager");
 const Engineer = require("./lib/Engineer");
 const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
-const path = require("path");
 const fs = require("fs");
 
-const OUTPUT_DIR = path.resolve(__dirname, "output");
-const outputPath = path.join(OUTPUT_DIR, "team.html");
-
-const render = require("./lib/htmlRenderer");
-
 var employeeList = [];
-const managerQuestions = [
+const managerQuestions =  [
     {   ///Input manager's name
         type: "input",
         name: "name",
-        message: "What is the manage's name?",
+        message: "What is the manager's name?",
         validate: async (input) => {
             ///Validating name - Not blank
             if (input == "" || /\s/.test(input)) {
@@ -38,7 +32,7 @@ const managerQuestions = [
     },
     {   ///Input manager's office number
         type: "input",
-        name: "office",
+        name: "officeNum",
         message: "What is the manager's office number?",
         validate: async (input) => {
             ///Validating office number - only has numbers
@@ -49,8 +43,8 @@ const managerQuestions = [
         }
     },
     {   ///Creating an employee list
-        type: "Employee List",
-        name: "Team",
+        type: "list",
+        name: "hasTeam",
         message: "Do you have any team members?",
         choices: ["Yes", "No"]
     }
@@ -82,29 +76,15 @@ const employeeQuestions = [
         }
     },
     {
-        type: "EmployeeList",
+        type: "list",
         name: "role",
-        message: "What is their role?",
+        message: "What employee's their role?",
         choices: ["engineer", "intern"]
     },
+    
     {
         when: input => {
-            return input.role == "Intern"
-        },
-        type: "input",
-        name: "school",
-        message: "Enter Intern's school name:",
-        validate: async (input) => {
-            //Validate name - Not blank
-            if (input == "") {
-                return "Please enter a valid school name.";
-            }
-            return true;
-        }
-    },
-    {
-        when: input => {
-            return input.role == "Engineer"
+            return input.role == "engineer"
         },
         type: "input",
         name: "github",
@@ -116,27 +96,44 @@ const employeeQuestions = [
     }
     return true
 }
+},
+{
+    when: input => {
+        return input.role == "intern"
+    },
+type: "input",
+name: "school",
+message: "Enter Intern's school name:",
+validate: async (input) => {
+    //Validate name - Not blank
+    if (input == "") {
+        return "Please enter a valid school name.";
+    }
+    return true;
+}
     },
     {
-        type: "Employee List",
-        name: "add",
+        type: "list",
+        name: "addAnother",
         message: "Would you like to add another team member?",
         choices: ["Yes", "No"]
     }
 ]
 
+
+
 //Building the lists
 
-function buildemployeeList(){
+function buildEmployeeList(){
     inquirer.prompt(employeeQuestions).then(employeeInfo => {
-        if (employeeInfo.role == "engineer") {
-            var newMember = new Engineer(employeeInfo.name, teamList.lengeth + 1, employeeInfo.email, employeeInfo.github);
-        } else { var newMember = new Intern(employeeInfo.name, teamList.lengeth + 1, employeeInfo.email, employeeInfo.school);
+        if (employeeInfo.role == "Engineer") {
+            var newMember = new Engineer(employeeInfo.name, employeeList.lengeth + 1, employeeInfo.email, employeeInfo.github);
+        } else {var newMember = new Intern(employeeInfo.name, employeeList.lengeth + 1, employeeInfo.email, employeeInfo.school);
         }
         employeeList.push(newMember);
-        if (employeeInfo.add === "Yes"){
+        if (employeeInfo.addAnother === "Yes"){
             console.log("");
-            buildemployeeList();
+            buildEmployeeList();
         }
         else {
             buildHTMLPage();
@@ -145,47 +142,49 @@ function buildemployeeList(){
 }
 
 function buildHTMLPage(){
-    var newFile = fs.readFileSync("./templates/main.html")
-    fs.writeFileSyncc("./output/team.html", newFile, function (err) {
+    let newFile = fs.readFileSync("C:/Users/allis/Documents/Employee-Chart/EmployeeChart/templates/Main.html")
+    fs.writeFileSync("team.html", newFile, function (err) {
         if (err) throw err;
     })
 
     console.log("Employee HTML shell page generated!");
 
     for (member of employeeList){
-        if (member.getRole() == "Manager") buildHtmlCard("manager", member.getName(), member.getId(), member.getEmail(), "Office: " + member.getOffice());
-    } if (member.getRole() == "Engineer") {
-        buildHtmlCard("engineer", member.getName(), member.getId(), member.getEmail(), "Github: " + member.getGithub());
-    } if (member.getRole() == "Intern") {
-        buildHtmlCard("intern", member.getName(), member.getId(), member.getEmail(), "School: " + member.getSchool());
+        if (member.getRole() == "Manager") {
+            buildHTMLCard("Manager", member.getName(), member.getId(), member.getEmail());
+    } else if (member.getRole() == "Engineer") {
+        buildHTMLCard("Engineer", member.getName(), member.getId(), member.getEmail(), "Github: " + member.getGithub());
+    } else if (member.getRole() == "Intern") {
+        buildHTMLCard("Intern", member.getName(), member.getId(), member.getEmail(), "School: " + member.getSchool());
     }
 }
-        fs.appendFileSync("./team.html", "</div></main></body></html>", function (err) {
+        fs.appendFileSync("team.html", "</div></main></body></html>", function (err) {
             if (err) throw err;
         });
         console.log("HTMLpage has been built!")
-    
 
-    function buildHtmlCard(memberType, name, id, email, propertyValue) {
-        let data = fs.readFileSync(`./templates/${memberType}.html`, 'utf8')
+    }
+
+    function buildHTMLCard(memberType, name, id, email, propertyValue) {
+        let data = fs.readFileSync(`C:/Users/allis/Documents/Employee-Chart/EmployeeChart/templates/${memberType}.html`, 'utf8')
         data = data.replace("nameHere", name);
         data = data.replace("idHere", `ID: ${id}`);
         data = data.replace("emailHere", `Email: <a href="mailto:${email}">${email}</a>`);
         data = data.replace("propertyHere", propertyValue);
-        fs.appendFileSync("./teamPage.html", data, err => { if (err) throw err; })
+        fs.appendFileSync("team.html", data, err => { if (err) throw err; })
         console.log("Card appended");
     }
 
     function init() {
-        inquire.prompt(managerQuestions).then(managerInfo => {
+        inquirer.prompt(managerQuestions).then(managerInfo => {
             let teamManager = new Manager(managerInfo.name, 1, managerInfo.email, managerInfo.officeNum);
             employeeList.push(teamManager);
             console.log(" ");
             if (managerInfo.hasTeam === "Yes") {
-                buildemployeeList();    
+                buildEmployeeList();    
             } else {
-                buildHtmlPage();
+                buildHTMLPage();
             }
         })
     }
-    
+    init(); 
